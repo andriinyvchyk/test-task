@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_db
+    ports:
+      - '54328:5432'
+    networks:
+      - app-network
+
+  redis:
+    container_name: redis
+    image: "redis:latest"
+    ports:
+      - "63799:6379"
+    networks:
+      - app-network
+
+  user:
+    build: ./apps/user
+    environment:
+      - DATABASE_URL=postgres://user:password@postgres:5432/users_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - app-network
+    ports:
+      - '3008:3000'
+
+  push:
+    build: ./apps/push
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
